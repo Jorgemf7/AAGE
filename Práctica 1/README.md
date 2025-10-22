@@ -6,15 +6,15 @@ Este proyecto utiliza **PySpark** para predecir la duración (en minutos) de act
 
 ---
 
-## Contenido
-- `Practica1_final.py` → Script ejecutable del proyecto.  
+## Contenido necesario
+- `main.py` → Script ejecutable del proyecto.  
 - `run_ww_2020_d.csv` → Dataset (debe estar en el mismo directorio).  
 
 ---
 
 ## Requisitos
 - **Python 3.9 o superior**  
-- **Java JDK 11–22** (con `JAVA_HOME` configurado)  
+- **Java JDK 11–22** (con variable de entorno `JAVA_HOME` configurada)  
 - **PySpark** instalado:  
   ```bash
   pip install pyspark
@@ -23,7 +23,7 @@ Este proyecto utiliza **PySpark** para predecir la duración (en minutos) de act
 ---
 
 ## Cómo ejecutar
-1. Asegúrate de que el CSV está junto al script.  
+1. Asegurarse de que el CSV está en el mismo directorio que el script.  
 2. Ejecuta:
    ```bash
    python Practica1_final.py
