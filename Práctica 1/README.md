@@ -1,6 +1,6 @@
 # Práctica 1 — Aprendizaje Automático a Gran Escala
 
-**Predicción de la duración de actividades de atletas con PySpark**
+**Predicción de la duración de actividades de atletas con PySpark - MLlib**
 
 El objetivo de este proyecto es entrenar un modelo de **Regresión Lineal** que prediga la duración (en minutos) de las actividades realizadas por atletas, a partir del dataset `run_ww_2020_d.csv` (https://www.kaggle.com/datasets/mexwell/long-distance-running-dataset/data), utilizando **PySpark**.
 

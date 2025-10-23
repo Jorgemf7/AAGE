@@ -2,7 +2,7 @@
 #  MODELO DE ENTRENAMIENTO PARA PREDICCIÓN DE LA DURACIÓN DE ACTIVIDADES DE ATLETAS
 # ===============================================================
 """
-Proyecto end-to-end: Predicción de duración de carreras con PySpark (Regresión Lineal)
+Proyecto end-to-end: Predicción de duración de actividades de atletas con PySpark - MLlib (Regresión Lineal)
 
 Descripción:
   - Carga run_ww_2020_d.csv
