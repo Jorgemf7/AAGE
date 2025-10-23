@@ -1,20 +1,21 @@
-# Práctica 1 — Aprendizaje Automático a Gran Escala  
+# Práctica 1 - Aprendizaje Automático a Gran Escala  
 
-**Predicción de la duración de carreras con PySpark**
+**Predicción de la duración de actividades de atletas con PySpark**
 
-Este proyecto utiliza **PySpark** para predecir la duración (en minutos) de actividades de carrera a partir del dataset `run_ww_2020_d.csv`, aplicando un modelo de **Regresión Lineal** con **validación cruzada**.
+El objetivo de este proyecto es entrenar un modelo de **Regresión Lineal** que prediga la duración (en minutos) de actividades de atletas a partir del dataset `run_ww_2020_d.csv` (https://www.kaggle.com/datasets/mexwell/long-distance-running-dataset/data), utilizando **PySpark**.
 
 ---
 
 ## Contenido necesario
 - `main.py` → Script ejecutable del proyecto.  
-- `run_ww_2020_d.csv` → Dataset (debe estar en el mismo directorio).  
+- `run_ww_2020_d.csv` → Dataset.  
+> ⚠️ Asegúrate de mantener el nombre del dataset (`run_ww_2020_d.csv`) y de no modificar su estructura original.
 
 ---
 
 ## Requisitos
-- **Python 3.9 o superior**  
-- **Java JDK 11–22** (con variable de entorno `JAVA_HOME` configurada)  
+- **Python 3.9** o superior 
+- **Java JDK** en versiones desde la 11 hasta la 22 (con variable de entorno `JAVA_HOME` configurada)  
 - **PySpark** instalado:  
   ```bash
   pip install pyspark
@@ -23,35 +24,22 @@ Este proyecto utiliza **PySpark** para predecir la duración (en minutos) de act
 ---
 
 ## Cómo ejecutar
-1. Asegurarse de que el CSV está en el mismo directorio que el script.  
-2. Ejecuta:
+1. Ubicar tanto el archivo `main.py` como el `run_ww_2020_d.csv` en el mismo directorio.
+2. Abrir una terminal en dicho directorio.
+3. Ejecuta:
    ```bash
-   python Practica1_final.py
+   python main.py
    ```
-3. El programa mostrará:
+4. El programa mostrará:
    - Número de filas leídas.  
    - Resultados del modelo (RMSE y R²).  
    - Ejemplo de predicciones.  
 
 ---
 
-## Resumen del pipeline
-1. **Carga y limpieza** de datos (`distance`, `duration`, `athlete`, etc.).  
-2. **Cálculo del ritmo** (`pace_min_km`) y eliminación de outliers.  
-3. **Codificación** de variables categóricas (`gender`, `age_group`, `country`, `major`, `season`).  
-4. **Separación** del conjunto en train/test por atleta.  
-5. **Entrenamiento** con `LinearRegression` y `CrossValidator`.  
-6. **Evaluación** final mediante **RMSE** y **R²**.
-
----
-
 ## Resultados esperados
-Ejemplo de salida:
-```
-=== RESULTADOS ===
-RMSE: 10.51
-R²: 0.90
-```
+Al finalizar, el script mostrará métricas de evaluación del modelo:
+- **RMSE (Root Mean Squared Error)** → error promedio en minutos.  
+- **R² (Coeficiente de determinación)** → calidad del ajuste del modelo.  
 
----
-
+Además, se mostrarán ejemplos de predicciones comparando la duración real y predicha junto al ritmo medio (min/km).
