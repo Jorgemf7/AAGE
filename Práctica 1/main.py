@@ -1,3 +1,6 @@
+# ===============================================================
+#  MODELO DE ENTRENAMIENTO PARA PREDICCIÓN DE LA DURACIÓN DE ACTIVIDADES DE ATLETAS
+# ===============================================================
 """
 Proyecto end-to-end: Predicción de duración de carreras con PySpark (Regresión Lineal)
 
@@ -10,9 +13,18 @@ Descripción:
   - Visualización de resultados de predicciones
 """
 
-# ========================
+
+
+# Imprimir título principal al iniciar el script.
+print("\n" + "=" * 80) 
+print("MODELO DE ENTRENAMIENTO PARA PREDICCIÓN DE LA DURACIÓN DE ACTIVIDADES DE ATLETAS".center(80)) 
+print("=" * 80 + "\n")
+
+
+
+# ---------------------------------------------------------------
 # IMPORTACIONES NECESARIAS
-# ========================
+# ---------------------------------------------------------------
 import os
 import sys
 from pyspark.sql import SparkSession
@@ -23,16 +35,22 @@ from pyspark.ml.regression import LinearRegression
 from pyspark.ml.evaluation import RegressionEvaluator
 
 
-# ========================
+
+# ---------------------------------------------------------------
 # CONFIGURACIÓN BÁSICA
-# ========================
+# ---------------------------------------------------------------
 os.environ["PYSPARK_PYTHON"] = sys.executable
 os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
 
 
-# ========================
+
+# ---------------------------------------------------------------
 # INICIO SESIÓN SPARK
-# ========================
+# ---------------------------------------------------------------
+print("\n" + "-" * 60)
+print(">>> INICIO SESIÓN SPARK")
+print("-" * 60 + "\n")
+
 spark = SparkSession.builder \
     .config("spark.driver.memory", "8g") \
     .getOrCreate()
@@ -40,25 +58,31 @@ spark = SparkSession.builder \
 # Para evitar mensajes info y warning excesivos.
 spark.sparkContext.setLogLevel("ERROR")
 
-print("\n=== SESIÓN SPARK INICIADA ===\n")
 
-# ========================
+
+# ---------------------------------------------------------------
 # CARGA Y EXPLORACIÓN INICIAL DEL DATASET
-# ========================
-print("\n=== CARGANDO DATOS ===\n")
+# ---------------------------------------------------------------
+print("\n\n" + "-" * 60)
+print(">>> CARGA DE DATOS Y EXPLORACIÓN INICIAL")
+print("-" * 60 + "\n")
+
 df = spark.read.csv("run_ww_2020_d.csv", header=True, inferSchema=True)
 print("Muestra de las primeras cinco filas del dataset original:")
 df.show(5, truncate=False)
 print(f"Filas: {df.count()}, Variables: {len(df.columns)}")
 print("\nEsquema del dataset original:")
 df.printSchema()
-print("\n=== FIN EXPLORACIÓN INICIAL ===\n")
+print("\n--- FIN EXPLORACIÓN INICIAL ---\n\n")
 
 
-# ========================
+
+# ---------------------------------------------------------------
 # PREPROCESAMIENTO DEL DATASET
-# ========================
-print("\n=== INICIANDO PREPROCESAMIENTO ===\n")
+# ---------------------------------------------------------------
+print("\n" + "-" * 60)
+print(">>> INICIANDO PREPROCESAMIENTO")
+print("-" * 60 + "\n")
 
 # Eliminación de filas con valores de duración o distancia igual a 0.
 df_filtered = df.filter((df.duration > 0) & (df.distance > 0))
@@ -107,13 +131,16 @@ df_final.show(5, truncate=False)
 print(f"Filas: {df_final.count()}, Variables: {len(df_final.columns)}")
 print("\nEsquema del dataset final tras el preprocesamiento:")
 df_final.printSchema()
-print("\n=== PREPROCESAMIENTO COMPLETADO ===\n")
+print("\n--- PREPROCESAMIENTO COMPLETADO ---\n\n")
 
 
-# ========================
+
+# ---------------------------------------------------------------
 # PREPARACIÓN DE DATOS PARA EL ENTRENAMIENTO
-# ========================
-print("\n=== PREPARANDO DATOS PARA ENTRENAMIENTO ===\n")
+# ---------------------------------------------------------------
+print("\n" + "-" * 60)
+print(">>> PREPARANDO DATOS PARA ENTRENAMIENTO")
+print("-" * 60 + "\n")
 
 # Convertimos las columnas de tipo categórico en índices numéricos. 
 gender_indexer = StringIndexer(inputCol="gender", outputCol="gender_index")
@@ -146,7 +173,7 @@ train_athletes, test_athletes = athletes.randomSplit([0.8, 0.2], seed=42)
 # Filtramos filas según atletas asignados.
 train_df = df_prepared.join(train_athletes, on="athlete", how="inner")
 test_df = df_prepared.join(test_athletes, on="athlete", how="inner")
-print("\nDataset separado en entrenamiento y test según atletas.\n")
+print("\nDataset separado en entrenamiento y test según atletas.")
 
 print("\nMostramos el número de filas en train y test:")
 print(f"Train: {train_df.count()} filas, Test: {test_df.count()} filas")
@@ -156,13 +183,16 @@ print(f"Train: {train_df.count()} filas, Test: {test_df.count()} filas")
 train_df = train_df.withColumnRenamed("duration", "label")  
 test_df = test_df.withColumnRenamed("duration", "label")
 print("\nVariable objetivo 'duration' renombrada a 'label'.\n")
-print("\n=== PREPARACIÓN DE DATOS PARA ENTRENAMIENTO COMPLETADA ===\n")
+print("\n--- PREPARACIÓN DE DATOS PARA ENTRENAMIENTO COMPLETADA ---\n\n")
 
 
-# ========================
+
+# ---------------------------------------------------------------
 # MODELO: REGRESIÓN LINEAL
-# ========================
-print("\n=== ENTRENAMIENTO DEL MODELO ===\n")
+# ---------------------------------------------------------------
+print("\n" + "-" * 60)
+print(">>> ENTRENAMIENTO DEL MODELO")
+print("-" * 60 + "\n")
 
 # Definir el modelo base.
 lr = LinearRegression(featuresCol="features", labelCol="label", maxIter=50, regParam=0.001, elasticNetParam=1.0)  
@@ -171,13 +201,16 @@ lr = LinearRegression(featuresCol="features", labelCol="label", maxIter=50, regP
 print("Entrenando modelo de Regresión Lineal...")
 print("Hiperparámetros: regParam=0.001, elasticNetParam=1.0, maxIter=50")
 lr_model = lr.fit(train_df)
-print("\n=== ENTRENAMIENTO COMPLETADO ===\n")
+print("\n--- ENTRENAMIENTO COMPLETADO ---\n\n")
 
 
-# ========================
+
+# ---------------------------------------------------------------
 # EVALUACIÓN
-# ========================
-print("\n=== EVALUANDO MODELO ===\n")
+# ---------------------------------------------------------------
+print("\n" + "-" * 60)
+print(">>> EVALUANDO MODELO")
+print("-" * 60 + "\n")
 
 # Preparar evaluadores.
 evaluator_rmse = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
@@ -194,7 +227,13 @@ lr_r2   = evaluator_r2.evaluate(lr_preds)
 print(f"Modelo de Regresión Lineal")
 print(f"RMSE: {lr_rmse:.4f}")
 print(f"R²: {lr_r2:.4f}")
+print("\n--- EVALUACIÓN COMPLETADA ---\n\n")
 
+
+
+# ---------------------------------------------------------------
+# MUESTRA DE RESULTADOS
+# ---------------------------------------------------------------
 # Función para añadir columnas de ritmo (min/km) al DataFrame de predicciones.
 def add_paces(pred_df, distance_col="distance", y_true_col="label", y_pred_col="prediction"):
   
@@ -206,11 +245,17 @@ def add_paces(pred_df, distance_col="distance", y_true_col="label", y_pred_col="
 # Añadir columnas de ritmo (min/km)
 lr_preds = add_paces(lr_preds)
 
-print("\n=== MOSTRANDO RESULTADOS ===\n")
+print("\n" + "-" * 60)
+print(">>> MOSTRANDO RESULTADOS")
+print("-" * 60 + "\n")
 
+print("Se muestran los resultados de predicción de duración junto al ritmo medio real y predicho:")
 # Mostrar algunas predicciones con ritmos.
 lr_preds.select("athlete", "distance", "label", "prediction", 
                 "pace_real_min_km", "pace_pred_min_km").show(10, truncate=False)
 
 
-print("=== PROCESO COMPLETADO ===")
+
+print("\n" + "-" * 60)
+print(">>>  PROCESO COMPLETADO EXITOSAMENTE  <<<")
+print("-" * 60 + "\n")
