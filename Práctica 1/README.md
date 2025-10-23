@@ -41,7 +41,10 @@ El script `main.py` se organiza en las siguientes secciones:
    python main.py
    ```
 4. El programa mostrará:
-   - Número de filas leídas.  
+   - Filas de ejemplo del dataset original.
+   - Número de filas y variables del dataset. 
+   - Los pasos que se van siguiendo. 
+   - Hiperparámetros seleccionados para el modelo.
    - Resultados del modelo (RMSE y R²).  
    - Ejemplo de predicciones.  
 
