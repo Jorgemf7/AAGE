@@ -60,10 +60,10 @@ Además, se mostrarán ejemplos de predicciones comparando la duración real y p
 
 Al ejecutar `main.py`, se mostrarán resultados similares a:
 
-+-------+------------------+------------------+------------------+------------------+------------------+
-|athlete|distance          |label             |prediction        |pace_real_min_km  |pace_pred_min_km  |
-+-------+------------------+------------------+------------------+------------------+------------------+
-|1580   |11.54             |63.0              |59.30625607137681 |5.459272097053726 |5.139190300812548 |
+| athlete | distance | label | prediction | pace_real_min_km | pace_pred_min_km |
+|---------|---------|-------|------------|-----------------|-----------------|
+| 1580    | 11.54   | 63.0  | 59.31      | 5.46            | 5.14            |
+
 
 Esto permite ver rápidamente cómo se comparan las **duraciones reales** (`label`) con las **predicciones** (`prediction`) y el ritmo medio estimado (`pace_pred_min_km`).
 
