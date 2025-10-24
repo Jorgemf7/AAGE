@@ -10,6 +10,8 @@ El objetivo de este proyecto es entrenar un modelo de **Regresión Lineal** que 
 - `main.py` → Script ejecutable del proyecto.  
 - `run_ww_2020_d.csv` → Dataset.  
 > ⚠️ Asegúrate de mantener el nombre del dataset (`run_ww_2020_d.csv`) y de no modificar su estructura original.
+📥 [Descargar `run_ww_2020_d.csv`](https://www.kaggle.com/datasets/mexwell/long-distance-running-dataset/data?select=run_ww_2020_d.csv)
+
 
 ---
 
