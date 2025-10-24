@@ -2,7 +2,7 @@
 
 **Predicción de la duración de actividades de atletas con PySpark - MLlib**
 
-El objetivo de este proyecto es entrenar un modelo de **Regresión Lineal** que prediga la duración (en minutos) de las actividades realizadas por atletas, a partir del dataset `run_ww_2020_d.csv` (https://www.kaggle.com/datasets/mexwell/long-distance-running-dataset/data), utilizando **PySpark**.
+El objetivo de este proyecto es entrenar un modelo de **Regresión Lineal** que prediga la duración (en minutos) de las actividades realizadas por atletas, a partir del dataset `run_ww_2020_d.csv` (https://www.kaggle.com/datasets/mexwell/long-distance-running-dataset/data?select=run_ww_2020_d.csv), utilizando **PySpark**.
 
 ---
 
@@ -10,6 +10,8 @@ El objetivo de este proyecto es entrenar un modelo de **Regresión Lineal** que 
 - `main.py` → Script ejecutable del proyecto.  
 - `run_ww_2020_d.csv` → Dataset.  
 > ⚠️ Asegúrate de mantener el nombre del dataset (`run_ww_2020_d.csv`) y de no modificar su estructura original.
+
+
 
 ---
 
