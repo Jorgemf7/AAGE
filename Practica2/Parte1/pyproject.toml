@@ -3,15 +3,22 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "torch_example"
+name = "fmnist_flower"
 version = "1.0.0"
-description = "Federated Learning with PyTorch and Flower (Quickstart Example)"
 license = "Apache-2.0"
+description = "Federated learning on Fashion-MNIST with PyTorch and Flower"
+authors = [
+    { name = "Profesor/a", email = "prof@example.com" },
+]
+
 dependencies = [
-    "flwr[simulation]>=1.23.0",
-    "flwr-datasets[vision]>=0.5.0",
-    "torch==2.8.0",
-    "torchvision==0.23.0",
+    "flwr[simulation]>=1.12.0",
+    "numpy<2.0.0",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "matplotlib>=3.0.0",
+    # Puedes dejar también flwr-datasets si quieres
+    # "flwr-datasets[vision]>=0.3.0",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -21,20 +28,23 @@ packages = ["."]
 publisher = "flwrlabs"
 
 [tool.flwr.app.components]
-serverapp = "torch_example.server_app:app"
-clientapp = "torch_example.client_app:app"
+serverapp = "sklearn_example.server_app:app"
+clientapp = "sklearn_example.client_app:app"
 
 [tool.flwr.app.config]
+model-type = "mlp"            # "mlp" o "cnn"
 num-server-rounds = 10
-fraction-evaluate = 0.5
-fraction-train = 0.5
+fraction-fit = 0.5            # 50% de clientes por ronda
+min-available-clients = 10
 local-epochs = 1
-min-available-clients = 3
-learning-rate = 0.01
 batch-size = 32
+
+# Estrategia a usar: "fedavg", "fedprox", "scaffold"
+strategy = "fedavg"
+proximal-mu = 0.1             # solo relevante para FedProx
 
 [tool.flwr.federations]
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 10
+options.num-supernodes = 10   # número de clientes (particiones)

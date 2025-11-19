@@ -1,83 +1,99 @@
-"""pytorchexample: A Flower / PyTorch app."""
+"""fmnist_example: Cliente Flower con PyTorch y Fashion-MNIST."""
+
+import warnings
 
 import torch
-from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
+from flwr.client import NumPyClient
 from flwr.clientapp import ClientApp
+from flwr.common import Context
 
-from torch_example.task import Net, load_data
-from torch_example.task import test as test_fn
-from torch_example.task import train as train_fn
+from sklearn_example.task import (
+    create_model,
+    get_model_parameters,
+    load_data,
+    set_model_params,
+    train_one_round,
+    test,
+)
+
+
+class FlowerClient(NumPyClient):
+    def __init__(self, model, train_loader, val_loader, device):
+        self.model = model
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.device = device
+
+    # --------- métodos requeridos por NumPyClient ---------
+
+    def get_parameters(self, config):
+        """Devuelve los parámetros actuales del modelo local."""
+        return get_model_parameters(self.model)
+
+    def fit(self, parameters, config):
+        """Entrenamiento local en el cliente."""
+        # Cargar pesos globales
+        set_model_params(self.model, parameters)
+
+        # Hiperparámetros específicos de FL (config dict viene del servidor)
+        local_epochs = int(config.get("local_epochs", 1))
+        proximal_mu = float(config.get("proximal_mu", 0.0))
+
+        # Entrenamiento local (FedAvg si proximal_mu = 0, FedProx si > 0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            train_one_round(
+                self.model,
+                self.train_loader,
+                device=self.device,
+                epochs=local_epochs,
+                proximal_mu=proximal_mu,
+                global_params=parameters,
+            )
+
+        # Métrica de entrenamiento (accuracy local)
+        train_loss, train_acc = test(self.model, self.train_loader, self.device)
+        num_examples = len(self.train_loader.dataset)
+
+        return (
+            get_model_parameters(self.model),
+            num_examples,
+            {"train_loss": train_loss, "train_accuracy": train_acc},
+        )
+
+    def evaluate(self, parameters, config):
+        """Evaluación local (validación) en el cliente."""
+        set_model_params(self.model, parameters)
+        val_loss, val_acc = test(self.model, self.val_loader, self.device)
+        num_examples = len(self.val_loader.dataset)
+
+        return val_loss, num_examples, {"val_accuracy": val_acc}
+
+
+def client_fn(context: Context):
+    """Construye el cliente con su partición de datos."""
+
+    # Info de partición (nº de cliente y nº total de clientes)
+    partition_id = context.node_config["partition-id"]
+    num_partitions = context.node_config["num-partitions"]
+
+    # Hiperparámetros de ejecución
+    model_type = context.run_config["model-type"]  # "mlp" o "cnn"
+    batch_size = int(context.run_config.get("batch-size", 32))
+
+    # Cargar datos para este cliente
+    train_loader, val_loader = load_data(
+        partition_id=partition_id,
+        num_partitions=num_partitions,
+        batch_size=batch_size,
+    )
+
+    # Crear modelo y seleccionar dispositivo
+    model = create_model(model_type)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    return FlowerClient(model, train_loader, val_loader, device).to_client()
+
 
 # Flower ClientApp
-app = ClientApp()
-
-
-@app.train()
-def train(msg: Message, context: Context):
-    """Train the model on local data."""
-
-    # Load the model and initialize it with the received weights
-    model = Net()
-    model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
-    model.to(device)
-
-    # Load the data
-    partition_id = context.node_config["partition-id"]
-    num_partitions = context.node_config["num-partitions"]
-    batch_size = context.run_config["batch-size"]
-    trainloader, _ = load_data(partition_id, num_partitions, batch_size)
-
-    # Call the training function
-    train_loss = train_fn(
-        model,
-        trainloader,
-        context.run_config["local-epochs"],
-        msg.content["config"]["lr"],
-        device,
-    )
-
-    # Construct and return reply Message
-    model_record = ArrayRecord(model.state_dict())
-    metrics = {
-        "train_loss": train_loss,
-        "num-examples": len(trainloader.dataset),
-    }
-    metric_record = MetricRecord(metrics)
-    content = RecordDict({"arrays": model_record, "metrics": metric_record})
-    return Message(content=content, reply_to=msg)
-
-
-@app.evaluate()
-def evaluate(msg: Message, context: Context):
-    """Evaluate the model on local data."""
-
-    # Load the model and initialize it with the received weights
-    model = Net()
-    model.load_state_dict(msg.content["arrays"].to_torch_state_dict())
-    device = torch.device("cpu")
-    model.to(device)
-
-    # Load the data
-    partition_id = context.node_config["partition-id"]
-    num_partitions = context.node_config["num-partitions"]
-    batch_size = context.run_config["batch-size"]
-    _, valloader = load_data(partition_id, num_partitions, batch_size)
-
-    # Call the evaluation function
-    eval_loss, eval_acc = test_fn(
-        model,
-        valloader,
-        device,
-    )
-
-    # Construct and return reply Message
-    metrics = {
-        "eval_loss": eval_loss,
-        "eval_acc": eval_acc,
-        "num-examples": len(valloader.dataset),
-    }
-    metric_record = MetricRecord(metrics)
-    content = RecordDict({"metrics": metric_record})
-    return Message(content=content, reply_to=msg)
+app = ClientApp(client_fn=client_fn)

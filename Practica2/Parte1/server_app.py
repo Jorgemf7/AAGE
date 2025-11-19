@@ -1,66 +1,83 @@
-"""pytorchexample: A Flower / PyTorch app."""
+"""fmnist_example: Servidor Flower con estrategias FedAvg/FedProx/Scaffold."""
 
-import torch
-from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
-from flwr.serverapp import Grid, ServerApp
-from flwr.serverapp.strategy import FedAvg
+from typing import Dict, List, Tuple
 
-from torch_example.task import Net, load_centralized_dataset, test
+from flwr.common import Context, Metrics, Scalar, ndarrays_to_parameters
+from flwr.server import ServerApp, ServerAppComponents, ServerConfig
+from flwr.server.strategy import FedAvg, FedProx, Scaffold
 
-# Create ServerApp
-app = ServerApp()
+from sklearn_example.task import create_model, get_model_parameters
 
 
-@app.main()
-def main(grid: Grid, context: Context) -> None:
-    """Main entry point for the ServerApp."""
+# --- Agregador de métricas personalizado (media ponderada por nº muestras) ---
 
-    # Read run config
-    fraction_evaluate: float = context.run_config["fraction-evaluate"]
-    fraction_train: float = context.run_config["fraction-train"]
-    num_rounds: int = context.run_config["num-server-rounds"]
-    lr: float = context.run_config["learning-rate"]
+def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Dict[str, Scalar]:
+    """
+    Promedia las métricas de los clientes ponderando por su tamaño de dataset.
+    metrics: lista de (num_samples, {"metric": valor, ...})
+    """
+    results: Dict[str, float] = {}
+    total = sum(num_samples for num_samples, _ in metrics)
 
-    # Load global model
-    global_model = Net()
-    arrays = ArrayRecord(global_model.state_dict())
+    if total == 0:
+        return results
 
-    # Initialize FedAvg strategy
-    strategy = FedAvg(
-        fraction_evaluate=fraction_evaluate,
-        fraction_train=fraction_train,
-        min_available_nodes=context.run_config["min-available-clients"],
-    )
+    for num_samples, m in metrics:
+        for k, v in m.items():
+            if isinstance(v, (float, int)):
+                if k not in results:
+                    results[k] = 0.0
+                results[k] += v * num_samples / total
 
-    # Start strategy, run FedAvg for `num_rounds`
-    result = strategy.start(
-        grid=grid,
-        initial_arrays=arrays,
-        train_config=ConfigRecord({"lr": lr}),
-        num_rounds=num_rounds,
-        evaluate_fn=global_evaluate,
-    )
-
-    # Save final model to disk
-    print("\nSaving final model to disk...")
-    state_dict = result.arrays.to_torch_state_dict()
-    torch.save(state_dict, "final_model.pt")
+    return results
 
 
-def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
-    """Evaluate model on central data."""
+def server_fn(context: Context) -> ServerAppComponents:
+    """Crea los componentes del servidor (estrategia + configuración)."""
 
-    # Load the model and initialize it with the received weights
-    model = Net()
-    model.load_state_dict(arrays.to_torch_state_dict())
-    device = torch.device("cpu")  # Usar CPU para consistencia
-    model.to(device)
+    model_type = context.run_config["model-type"]         # "mlp" o "cnn"
+    fraction_fit = context.run_config["fraction-fit"]     # proporción de clientes por ronda
+    min_available_clients = context.run_config["min-available-clients"]
+    num_rounds = context.run_config["num-server-rounds"]
 
-    # Load entire test set
-    test_dataloader = load_centralized_dataset()
+    # Estrategia: "fedavg", "fedprox" o "scaffold"
+    strategy_name = context.run_config.get("strategy", "fedavg").lower()
+    proximal_mu = float(context.run_config.get("proximal-mu", 0.1))
 
-    # Evaluate the global model on the test set
-    test_loss, test_acc = test(model, test_dataloader, device)
+    # Modelo inicial
+    model = create_model(model_type)
+    ndarrays = get_model_parameters(model)
+    global_model_init = ndarrays_to_parameters(ndarrays)
 
-    # Return the evaluation metrics
-    return MetricRecord({"accuracy": test_acc, "loss": test_loss})
+    # Elegir estrategia
+    if strategy_name == "fedprox":
+        strategy = FedProx(
+            proximal_mu=proximal_mu,
+            fraction_fit=fraction_fit,
+            min_available_clients=min_available_clients,
+            fit_metrics_aggregation_fn=weighted_average,
+            evaluate_metrics_aggregation_fn=weighted_average,
+            initial_parameters=global_model_init,
+        )
+    elif strategy_name == "scaffold":
+        strategy = Scaffold(
+            fraction_fit=fraction_fit,
+            min_available_clients=min_available_clients,
+            fit_metrics_aggregation_fn=weighted_average,
+            evaluate_metrics_aggregation_fn=weighted_average,
+            initial_parameters=global_model_init,
+        )
+    else:  # FedAvg por defecto
+        strategy = FedAvg(
+            fraction_fit=fraction_fit,
+            min_available_clients=min_available_clients,
+            fit_metrics_aggregation_fn=weighted_average,
+            evaluate_metrics_aggregation_fn=weighted_average,
+            initial_parameters=global_model_init,
+        )
+
+    config = ServerConfig(num_rounds=num_rounds)
+    return ServerAppComponents(strategy=strategy, config=config)
+
+
+app = ServerApp(server_fn=server_fn)
