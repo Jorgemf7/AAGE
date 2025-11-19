@@ -7,7 +7,7 @@ from flwr.client import NumPyClient
 from flwr.clientapp import ClientApp
 from flwr.common import Context
 
-from sklearn_example.task import (
+from task import (
     create_model,
     get_model_parameters,
     load_data,

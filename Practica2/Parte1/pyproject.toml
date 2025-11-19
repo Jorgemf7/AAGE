@@ -28,20 +28,20 @@ packages = ["."]
 publisher = "flwrlabs"
 
 [tool.flwr.app.components]
-serverapp = "sklearn_example.server_app:app"
-clientapp = "sklearn_example.client_app:app"
+serverapp = "server_app:app"
+clientapp = "client_app:app"
 
 [tool.flwr.app.config]
-model-type = "mlp"            # "mlp" o "cnn"
+model-type = "mlp"
 num-server-rounds = 10
-fraction-fit = 0.5            # 50% de clientes por ronda
+fraction-fit = 0.5
 min-available-clients = 10
 local-epochs = 1
 batch-size = 32
 
-# Estrategia a usar: "fedavg", "fedprox", "scaffold"
+# Estrategia a usar por defecto
 strategy = "fedavg"
-proximal-mu = 0.1             # solo relevante para FedProx
+proximal-mu = 0.1  # solo se usa si strategy="fedprox"
 
 [tool.flwr.federations]
 default = "local-simulation"
