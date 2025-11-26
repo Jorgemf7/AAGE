@@ -34,14 +34,14 @@ clientapp = "client_app:app"
 [tool.flwr.app.config]
 model-type = "mlp"
 num-server-rounds = 10
-fraction-fit = 0.5
+fraction-fit = 1.0
 min-available-clients = 10
-local-epochs = 1
-batch-size = 32
+local-epochs = 3
+batch-size = 64
 
 # Estrategia a usar por defecto
-strategy = "fedprox"
-proximal-mu = 0.1  # solo se usa si strategy="fedprox"
+strategy = "fedavg"
+proximal-mu = 0.01  # solo se usa si strategy="fedprox"
 
 [tool.flwr.federations]
 default = "local-simulation"

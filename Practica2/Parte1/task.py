@@ -230,7 +230,7 @@ def train_one_round(
     model.to(device)
     model.train()
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
 
     global_tensors = None
     if proximal_mu > 0.0 and global_params is not None:
