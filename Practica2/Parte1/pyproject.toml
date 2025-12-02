@@ -7,18 +7,12 @@ name = "fmnist_flower"
 version = "1.0.0"
 license = "Apache-2.0"
 description = "Federated learning on Fashion-MNIST with PyTorch and Flower"
-authors = [
-    { name = "Profesor/a", email = "prof@example.com" },
-]
-
 dependencies = [
     "flwr[simulation]>=1.12.0",
     "numpy<2.0.0",
     "torch>=2.0.0",
     "torchvision>=0.15.0",
-    "matplotlib>=3.0.0",
-    # Puedes dejar también flwr-datasets si quieres
-    # "flwr-datasets[vision]>=0.3.0",
+    "matplotlib>=3.0.0"
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -38,10 +32,9 @@ fraction-fit = 1.0
 min-available-clients = 10
 local-epochs = 3
 batch-size = 64
-
-# Estrategia a usar por defecto
-strategy = "fedavg"
+strategy = "fedprox"
 proximal-mu = 0.01  # solo se usa si strategy="fedprox"
+learning-rate = 5.0
 
 [tool.flwr.federations]
 default = "local-simulation"

@@ -1,4 +1,13 @@
-"""Fashion-MNIST: Flower server app with FedAvg and FedProx (logging enabled)."""
+"""Fashion-MNIST: Flower server app with FedAvg and FedProx (logging enabled).
+
+Este archivo define el servidor federado para Flower usando PyTorch.
+Contiene:
+1. CSVLogger: para guardar métricas por ronda automáticamente.
+2. Función weighted_average: para agregar métricas de los clientes.
+3. Función server_fn: construye la estrategia federada (FedAvg o FedProx) 
+   y configura el servidor.
+4. Objeto ServerApp para ejecutar la simulación con Flower.
+"""
 
 from typing import Dict, List, Tuple
 import csv
@@ -11,10 +20,14 @@ from flwr.server.strategy import FedAvg, FedProx
 from task import create_model, get_model_parameters
 
 
-# ---------------------------------------------------------
-# CSV LOGGER – guarda métricas de cada ronda automáticamente
-# ---------------------------------------------------------
+# =========================================================
+# CSV LOGGER
+# =========================================================
 class CSVLogger:
+    """
+    Guarda métricas (loss y val_accuracy) de cada ronda en un CSV.
+    """
+
     def __init__(self, filename: str):
         self.filename = filename
         # Crear fichero con cabecera si no existe
@@ -24,15 +37,19 @@ class CSVLogger:
                 writer.writerow(["round", "loss", "val_accuracy"])
 
     def log(self, rnd: int, loss: float, val_acc: float):
+        """Añade una fila al CSV con métricas de la ronda."""
         with open(self.filename, "a", newline="") as f:
             writer = csv.writer(f)
             writer.writerow([rnd, loss, val_acc])
 
 
-# ---------------------------------------------------------
+# =========================================================
 # MÉTRICA AGREGADA
-# ---------------------------------------------------------
+# =========================================================
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Dict[str, Scalar]:
+    """
+    Agrega métricas de los clientes usando media ponderada por número de ejemplos.
+    """
     total = sum(num_examples for num_examples, _ in metrics)
     if total == 0:
         return {}
@@ -45,12 +62,21 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Dict[str, Scalar]:
     return results
 
 
-# ---------------------------------------------------------
-# SERVIDOR
-# ---------------------------------------------------------
+# =========================================================
+# FUNCION SERVER_FN
+# =========================================================
 def server_fn(context: Context) -> ServerAppComponents:
+    """
+    Construye los componentes del servidor federado para Flower.
+    - Selecciona estrategia (FedAvg o FedProx) según config.
+    - Inicializa modelo global.
+    - Configura logging de métricas.
+    """
     cfg = context.run_config
 
+    # ----------------------------
+    # LEER CONFIGURACIÓN
+    # ----------------------------
     model_type = cfg.get("model-type", "mlp")
     strategy_name = cfg.get("strategy", "fedavg").lower()
     num_rounds = int(cfg.get("num-server-rounds", 10))
@@ -59,25 +85,35 @@ def server_fn(context: Context) -> ServerAppComponents:
     local_epochs = int(cfg.get("local-epochs", 1))
     proximal_mu = float(cfg.get("proximal-mu", 0.1))
 
-    # Crear logger
+    # ----------------------------
+    # LOGGER CSV
+    # ----------------------------
     log_file = f"results_{strategy_name}.csv"
     logger = CSVLogger(log_file)
 
-    # Modelo inicial
+    # ----------------------------
+    # MODELO GLOBAL
+    # ----------------------------
     model = create_model(model_type)
     init_params = ndarrays_to_parameters(get_model_parameters(model))
 
-    # Configuración enviada a clientes
+    # ----------------------------
+    # CONFIGURACIONES DE CLIENTE
+    # ----------------------------
     def fit_config(rnd: int):
+        """Hiperparámetros enviados a los clientes durante el entrenamiento."""
         return {
             "local_epochs": local_epochs,
             "proximal_mu": proximal_mu if strategy_name == "fedprox" else 0.0,
         }
 
     def eval_config(rnd: int):
+        """Hiperparámetros enviados a los clientes durante la evaluación."""
         return {}
 
-    # Elegir estrategia
+    # ----------------------------
+    # ELEGIR ESTRATEGIA
+    # ----------------------------
     if strategy_name == "fedprox":
         strategy = FedProx(
             proximal_mu=proximal_mu,
@@ -100,29 +136,35 @@ def server_fn(context: Context) -> ServerAppComponents:
             initial_parameters=init_params,
         )
 
-    # -----------------------------------------------------
-    # WRAPPEAR LA ESTRATEGIA PARA LOGGEAR LAS MÉTRICAS
-    # -----------------------------------------------------
-
+    # ----------------------------
+    # WRAPPEAR MÉTRICAS PARA LOGGING
+    # ----------------------------
     old_aggregate_evaluate = strategy.aggregate_evaluate
 
     def aggregate_evaluate_with_logging(
         rnd: int, results, failures
     ) -> Tuple[float, Dict[str, Scalar]]:
+        """
+        Agrega métricas y guarda automáticamente en CSV.
+        """
         loss, metrics = old_aggregate_evaluate(rnd, results, failures)
-
         val_acc = metrics.get("val_accuracy", None)
         if loss is not None and val_acc is not None:
             logger.log(rnd, float(loss), float(val_acc))
-
         return loss, metrics
 
     strategy.aggregate_evaluate = aggregate_evaluate_with_logging
 
-    # Crear configuración de servidor
+    # ----------------------------
+    # CONFIGURACIÓN DEL SERVIDOR
+    # ----------------------------
     config = ServerConfig(num_rounds=num_rounds)
 
     return ServerAppComponents(strategy=strategy, config=config)
 
 
+# =========================================================
+# SERVER APP
+# =========================================================
+# Se utiliza para lanzar la simulación con Flower
 app = ServerApp(server_fn=server_fn)
