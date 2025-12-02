@@ -191,12 +191,12 @@ def set_model_params(model: nn.Module, params: NDArrays) -> nn.Module:
     return model
 
 def train_one_round(model: nn.Module, train_loader: DataLoader, device: torch.device,
-                    epochs: int = 1, proximal_mu: float = 0.0, global_params: NDArrays = None):
+                    epochs: int = 1, proximal_mu: float = 0.0, global_params: NDArrays = None, lr: float = 0.005):
     """Entrenamiento local (FedAvg o FedProx si proximal_mu > 0)"""
     model.to(device)
     model.train()
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
 
     global_tensors = None
     if proximal_mu > 0.0 and global_params is not None:

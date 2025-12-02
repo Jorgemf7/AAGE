@@ -48,6 +48,7 @@ class FlowerClient(NumPyClient):
         # Hiperparámetros específicos de FL
         local_epochs = int(config.get("local_epochs", 1))
         proximal_mu = float(config.get("proximal_mu", 0.0))
+        lr = float(config.get("learning_rate", 0.005))
 
         # Entrenamiento local (FedAvg si proximal_mu = 0, FedProx si > 0)
         with warnings.catch_warnings():
@@ -59,6 +60,7 @@ class FlowerClient(NumPyClient):
                 epochs=local_epochs,
                 proximal_mu=proximal_mu,
                 global_params=parameters,
+                lr=lr,
             )
 
         # Métricas de entrenamiento

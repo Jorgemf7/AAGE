@@ -84,11 +84,12 @@ def server_fn(context: Context) -> ServerAppComponents:
     min_available_clients = int(cfg.get("min-available-clients", 10))
     local_epochs = int(cfg.get("local-epochs", 1))
     proximal_mu = float(cfg.get("proximal-mu", 0.1))
+    lr = float(cfg.get("learning-rate", 0.005))
 
     # ----------------------------
     # LOGGER CSV
     # ----------------------------
-    log_file = f"results_{strategy_name}.csv"
+    log_file = f"results_{strategy_name}({model_type}).csv"
     logger = CSVLogger(log_file)
 
     # ----------------------------
@@ -105,6 +106,7 @@ def server_fn(context: Context) -> ServerAppComponents:
         return {
             "local_epochs": local_epochs,
             "proximal_mu": proximal_mu if strategy_name == "fedprox" else 0.0,
+            "learning_rate": lr,
         }
 
     def eval_config(rnd: int):
