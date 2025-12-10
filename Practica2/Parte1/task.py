@@ -30,14 +30,43 @@ _partitions = None
 # =========================================================
 # FUNCIONES DE CARGA DE DATOS
 # =========================================================
+
+def _calculate_stats():
+    """
+    Carga el dataset de entrenamiento temporalmente para calcular
+    la media y desviación típica reales de los píxeles.
+    """
+    print("Calculando estadísticas de normalización (Media y Std)...")
+    # Cargamos datos sin normalizar (solo ToTensor)
+    temp_transform = transforms.Compose([transforms.ToTensor()])
+    temp_dataset = datasets.FashionMNIST(root="./data", train=True, download=True, transform=temp_transform)
+    
+    # Cargamos todo el dataset en un solo batch para cálculo vectorizado rápido
+    # num_workers=0 es importante en Windows
+    loader = DataLoader(temp_dataset, batch_size=len(temp_dataset), shuffle=False, num_workers=0)
+    
+    data, _ = next(iter(loader))
+    
+    mean = data.mean().item()
+    std = data.std().item()
+    
+    print(f"Estadísticas calculadas -> Mean: {mean:.4f}, Std: {std:.4f}")
+    return (mean,), (std,)
+
 def get_datasets():
-    """Carga Fashion-MNIST."""
+    """Carga Fashion-MNIST con normalización calculada dinámicamente."""
     global _train_dataset, _test_dataset
     if _train_dataset is None or _test_dataset is None:
+        
+        # 1. Calculamos los valores reales antes de definir la transformación final
+        mean_val, std_val = _calculate_stats()
+
+        # 2. Usamos esos valores en la normalización
         transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,))
+            transforms.Normalize(mean_val, std_val)
         ])
+        
         _train_dataset = datasets.FashionMNIST(root="./data", train=True, download=True, transform=transform)
         _test_dataset = datasets.FashionMNIST(root="./data", train=False, download=True, transform=transform)
     return _train_dataset, _test_dataset
@@ -51,8 +80,6 @@ def create_partitions(num_partitions: int):
     train_ds, _ = get_datasets()
     
     # --- CORRECCIÓN DEL ERROR DE NUMPY ---
-    # Usamos .numpy() si es tensor, o np.array() estándar si es lista.
-    # Esto evita el ValueError "Unable to avoid copy".
     if isinstance(train_ds.targets, torch.Tensor):
         labels = train_ds.targets.numpy()
     else:
@@ -131,9 +158,9 @@ class MLP(nn.Module):
         self.fc1 = nn.Linear(28*28, 256)
         self.fc2 = nn.Linear(256, 128)
         self.fc3 = nn.Linear(128, NUM_CLASSES)
-        self.dropout = nn.Dropout(0.2)
-
-        self.dropout = nn.Dropout(0.5)
+        
+        # Corregido: tenías dos definiciones de self.dropout
+        self.dropout = nn.Dropout(0.2) 
 
     def forward(self, x):
         x = self.flatten(x)
