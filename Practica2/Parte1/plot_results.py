@@ -114,7 +114,7 @@ if df_fedavg_mlp is not None or df_fedprox_mlp is not None:
 if df_fedavg_cnn is not None or df_fedprox_cnn is not None:
     plot_comparison(df_fedavg_cnn, df_fedprox_cnn, "CNN", "cnn")
 
-# Gráfica combinada con todo
+# Gráfica con todo
 print("\n--- Generando gráfica combinada ---")
 plot_all_comparison(df_fedavg_mlp, df_fedprox_mlp, df_fedavg_cnn, df_fedprox_cnn)
 
