@@ -1,0 +1,50 @@
+# pyproject.toml
+# Configuración del proyecto y de la simulación de Flower
+# =========================================================
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fmnist_flower"
+version = "1.0.0"
+license = "Apache-2.0"
+description = "Aprendizaje Federado en Fashion-MNIST con PyTorch y Flower"
+dependencies = [
+    "flwr[simulation]>=1.12.0",
+    "numpy<2.0.0",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "matplotlib>=3.0.0" # Necesario para generar los histogramas en task.py
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.flwr.app]
+publisher = "flwrlabs"
+
+[tool.flwr.app.components]
+# Referencias a las aplicaciones del servidor y del cliente
+serverapp = "server_app:app"
+clientapp = "client_app:app"
+
+[tool.flwr.app.config]
+# Hiperparámetros de la práctica
+model-type = "mlp"          # "mlp" o "cnn". Modelo obligatorio es MLP.
+strategy = "fedavg"         # "fedavg" o "fedprox".
+num-server-rounds = 10      # Número de rondas de agregación
+fraction-fit = 1.0          # Fracción de clientes que participan en el entrenamiento (100%)
+min-available-clients = 10  # Mínimo de clientes que deben estar disponibles (para los 10 obligatorios)
+local-epochs = 3            # Epochs locales por ronda
+batch-size = 64
+learning-rate = 0.01
+proximal-mu = 0.01          # Parámetro Mu (μ) para FedProx (0.0 para FedAvg)
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+# Número total de clientes (particiones de datos)
+options.num-supernodes = 10
