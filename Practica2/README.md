@@ -43,7 +43,7 @@ Practica2/
 │   ├── river.ipynb             # Notebook principal de la Parte II
 │   └── *.png                   # Gráficas resultantes (Batch vs Streaming, Drifts, etc.)
 │
-├── Memoria.pdf   
+├── Memoria Práctica 2.pdf   
 │ 
 └── README.md
 ```
