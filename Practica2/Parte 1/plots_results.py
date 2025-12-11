@@ -20,17 +20,17 @@ def load_data(filename):
 
 def plot_experiment(experiment_name, files_dict):
     """
-    Genera gráficas comparativas de Loss y Accuracy para un conjunto de archivos.
+    Genera UNA imagen con dos gráficas (Accuracy y Loss) para un conjunto de archivos.
     
     Args:
-        experiment_name (str): Título para la gráfica y nombre del archivo de salida.
+        experiment_name (str): Título general y nombre del archivo de salida.
         files_dict (dict): Diccionario { "Etiqueta para Leyenda": "nombre_archivo.csv" }
     """
-    print(f"--- Generando gráficas para: {experiment_name} ---")
+    print(f"--- Generando gráfica combinada para: {experiment_name} ---")
     
-    # Preparamos las figuras
-    fig_acc, ax_acc = plt.subplots(figsize=(10, 6))
-    fig_loss, ax_loss = plt.subplots(figsize=(10, 6))
+    # Preparamos 1 figura con 2 subplots (1 fila, 2 columnas)
+    # figsize=(16, 6) hace la imagen más ancha para que quepan bien las dos gráficas
+    fig, (ax_acc, ax_loss) = plt.subplots(1, 2, figsize=(16, 6))
     
     data_found = False
 
@@ -38,38 +38,43 @@ def plot_experiment(experiment_name, files_dict):
         df = load_data(filename)
         if df is not None:
             data_found = True
-            # Plot Accuracy
+            # Plot Accuracy en el primer eje (ax_acc)
             ax_acc.plot(df["Round"], df["Accuracy"], marker="o", linestyle="-", label=label)
-            # Plot Loss
+            # Plot Loss en el segundo eje (ax_loss)
             ax_loss.plot(df["Round"], df["Loss"], marker="o", linestyle="-", label=label)
 
     if not data_found:
         print("No hay datos para graficar en este experimento.\n")
-        plt.close(fig_acc)
-        plt.close(fig_loss)
+        plt.close(fig)
         return
 
-    # Configuración Gráfica Accuracy
-    ax_acc.set_title(f"ACCURACY - {experiment_name}")
+    # --- Configuración Gráfica Accuracy (Izquierda) ---
+    ax_acc.set_title("Accuracy")
     ax_acc.set_xlabel("Ronda")
     ax_acc.set_ylabel("Accuracy")
     ax_acc.grid(True, linestyle='--', alpha=0.7)
     ax_acc.legend()
-    acc_path = os.path.join(PLOTS_DIR, f"{experiment_name.replace(' ', '_')}_accuracy.png")
-    fig_acc.savefig(acc_path)
-    print(f"Guardado: {acc_path}")
-    plt.close(fig_acc)
 
-    # Configuración Gráfica Loss
-    ax_loss.set_title(f"LOSS - {experiment_name}")
+    # --- Configuración Gráfica Loss (Derecha) ---
+    ax_loss.set_title("Loss")
     ax_loss.set_xlabel("Ronda")
     ax_loss.set_ylabel("Loss")
     ax_loss.grid(True, linestyle='--', alpha=0.7)
     ax_loss.legend()
-    loss_path = os.path.join(PLOTS_DIR, f"{experiment_name.replace(' ', '_')}_loss.png")
-    fig_loss.savefig(loss_path)
-    print(f"Guardado: {loss_path}")
-    plt.close(fig_loss)
+
+    # Título global de la figura
+    fig.suptitle(f"{experiment_name}", fontsize=16)
+    
+    # Ajustar espacios para que no se monten los textos
+    plt.tight_layout()
+
+    # Guardar archivo único
+    output_filename = f"{experiment_name.replace(' ', '_')}_combined.png"
+    save_path = os.path.join(PLOTS_DIR, output_filename)
+    
+    fig.savefig(save_path)
+    print(f"Guardado: {save_path}")
+    plt.close(fig)
     print("")
 
 
