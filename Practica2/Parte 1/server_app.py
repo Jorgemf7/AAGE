@@ -40,7 +40,21 @@ def main(grid: Grid, context: Context) -> None:
         os.makedirs(results_dir)
 
     # Nombre dinámico del archivo con ruta incluida
-    filename = f"results_{strategy_name}({model_type}).csv"
+    if strategy_name == "fedavg":
+        # Para FedAvg no incluimos mu
+        filename = (
+            f"results_{strategy_name}({model_type})_"
+            f"le{local_epochs}_"
+            f"frac{fraction_train}.csv"
+        )
+    else:
+        # Para FedProx (u otros) sí incluimos mu
+        filename = (
+            f"results_{strategy_name}({model_type})_"
+            f"le{local_epochs}_"
+            f"frac{fraction_train}_"
+            f"mu{proximal_mu}.csv"
+        )
     csv_filename = os.path.join(results_dir, filename)
     
     # Inicializar el archivo CSV con los encabezados

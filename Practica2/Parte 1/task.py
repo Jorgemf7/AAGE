@@ -30,7 +30,6 @@ _partitions = None
 # =========================================================
 # FUNCIONES DE CARGA DE DATOS
 # =========================================================
-
 def _calculate_stats():
     """
     Carga el dataset de entrenamiento temporalmente para calcular
