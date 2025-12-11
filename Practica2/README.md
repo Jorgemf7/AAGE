@@ -4,7 +4,7 @@
 
 Esta práctica se divide en dos partes:
 1. **Aprendizaje Federado** utilizando Flower con las estrategias FedAvg y FedProx sobre Fashion-MNIST.  
-2. **Aprendizaje Continuo** utilizando la librería River, evaluando modelos incrementales en flujo de datos.
+2. **Aprendizaje Continuo** utilizando la librería River, evaluando modelos incrementales en flujo de datos sobre Electricity.
 
 ---
 
@@ -26,17 +26,27 @@ pip install -r requirements.txt
 
 ## 2. Estructura del proyecto
 
-- `task.py`: descarga Fashion-MNIST, calcula normalización real, genera particiones Non-IID y histogramas.
-- `client_app.py`: lógica del cliente Flower (entrenamiento local y evaluación).
-- `server_app.py`: lógica del servidor, estrategia y guardado de resultados.
-- `plot_results.py`: genera gráficas comparativas de loss y accuracy.
-- `river.ipynb`: Parte II de aprendizaje continuo con River.
-
-Carpetas generadas automáticamente:
-
-- `results/`: CSV con métricas por ronda.
-- `plots/`: gráficas generadas.
-- `histograms/`: histogramas Non-IID.
+```text
+Practica2/
+│
+├── Parte 1/                    # Aprendizaje Federado con Flower
+│   ├── histograms/             # (Generado) Imágenes de distribución de datos (Non-IID)
+│   ├── plots/                  # (Generado) Gráficas comparativas de loss y accuracy
+│   ├── results/                # (Generado) Archivos CSV con métricas por ronda
+│   ├── client_app.py           # Lógica del cliente Flower (entrenamiento/evaluación)
+│   ├── plots_results.py        # Generación de gráficas desde los CSV
+│   ├── pyproject.toml          # Configuración del proyecto y dependencias
+│   ├── server_app.py           # Lógica del servidor y estrategia de agregación
+│   └── task.py                 # Descarga, normalización y particionado de datos
+│
+├── Parte 2/                    # Aprendizaje Continuo con River
+│   ├── river.ipynb             # Notebook principal de la Parte II
+│   └── *.png                   # Gráficas resultantes (Batch vs Streaming, Drifts, etc.)
+│
+├── Memoria.pdf   
+│ 
+└── README.md
+```
 
 ---
 
@@ -53,6 +63,11 @@ model-type = "mlp"       # o "cnn"
 strategy = "fedavg"      # o "fedprox"
 proximal-mu = 0.01       # solo para FedProx
 num-server-rounds = 10
+fraction-fit = 1.0          
+min-available-clients = 10  
+local-epochs = 10            
+batch-size = 64
+learning-rate = 0.01
 ```
 
 #### 1.2 Generar particiones e histogramas (solo una vez)
@@ -60,6 +75,8 @@ num-server-rounds = 10
 ```bash
 python task.py
 ```
+
+Las gráficas aparecerán en `histograms/`.
 
 #### 1.3 Ejecutar la simulación federada
 
@@ -77,8 +94,6 @@ python plots_results.py
 
 Las gráficas aparecerán en `plots/`.
 
----
-
 ### 2. Resultados generados
 
 - `results/*.csv`: métricas por ronda (accuracy y loss).
@@ -89,17 +104,17 @@ Las gráficas aparecerán en `plots/`.
 
 ## 4. Parte II — Aprendizaje Continuo (River)
 
-La segunda parte se desarrolla en el notebook `river.ipynb`, donde se implementa aprendizaje incremental sobre flujos de datos.
+La segunda parte se desarrolla en el notebook `river.ipynb`, donde se implementa aprendizaje incremental y estrategias adaptativas sobre el conjunto de datos de Electricity (Elec2).
 
-### 1 Contenido del notebook
+### 1. Contenido del notebook
 
-Incluye:
-- Simulación de flujo de datos.
-- Entrenamiento incremental (online learning).
-- Evaluación prequential (test-then-train).
-- Modelos: NaiveBayes, LogisticRegression incremental, HoeffdingTreeClassifier, AdaptiveRandomForestClassifier.
-- Comparación batch vs incremental.
-- Gráficas de evolución temporal del rendimiento.
+- Comparación Batch vs. Streaming: Contrastación de rendimiento entre un enfoque estático (GaussianNB de Scikit-learn) y uno incremental (GaussianNB de River).
+- Manejo de Concept Drift: Implementación del detector ADWIN para identificar cambios en la distribución de datos y reiniciar el modelo automáticamente.
+- Modelos Adaptativos Avanzados: Implementación y evaluación de árboles y ensambles diseñados para flujos cambiantes:
+    - `HoeffdingAdaptiveTreeClassifier` (HAT).
+    - `AdaptiveRandomForestClassifier` (ARF).
+- Evaluación Progresiva: Uso de la métrica accuracy actualizada instancia a instancia (test-then-train).
+
 
 ### 2. Ejecución
 
@@ -109,24 +124,6 @@ jupyter notebook river.ipynb
 
 ### 3 Resultados esperados
 
-- Curvas de accuracy incremental.
-- Evaluación prequential.
-- Comparación entre modelos incrementales.
-- Análisis del concept drift y adaptación de los modelos.
-
----
-
-## 5. Requisitos de entrega
-
-### Parte I (Flower)
-- CSV generados.
-- Gráficas comparativas.
-- Discusión FedAvg vs FedProx.
-- Comparación MLP vs CNN.
-- Histogramas Non-IID.
-
-### Parte II (River)
-- Notebook ejecutado.
-- Gráficas de aprendizaje incremental.
-- Conclusiones sobre concept drift.
-
+- Gráfica comparativa: Precisión fija (Batch) vs. Precisión evolutiva (Streaming).
+- Visualización de los momentos de drift detectados por ADWIN.
+- Comparativa de rendimiento entre modelos de árboles adaptativos (HAT vs. ARF).
