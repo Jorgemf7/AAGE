@@ -157,8 +157,6 @@ class MLP(nn.Module):
         self.fc1 = nn.Linear(28*28, 256)
         self.fc2 = nn.Linear(256, 128)
         self.fc3 = nn.Linear(128, NUM_CLASSES)
-        
-        # Corregido: tenías dos definiciones de self.dropout
         self.dropout = nn.Dropout(0.2) 
 
     def forward(self, x):

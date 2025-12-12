@@ -104,15 +104,7 @@ experiments_prox = {
     "FedProx (mu=0.1)":  "results_fedprox(mlp)_le10_frac1.0_mu0.1.csv",
 }
 
-# 4. COMPARATIVA DE MODELOS: MLP vs CNN
-# Comparamos MLP con FedAvg(CNN) y FedProx(CNN) manteniendo local-epochs = 10 y fraction-fit = 1.0
-experiments_models = {
-    "FedAvg MLP": "results_fedavg(mlp)_le10_frac1.0.csv",
-    "FedAvg CNN": "results_fedavg(cnn)_le10_frac1.0.csv",
-    "FedProx (mu=0.01) CNN": "results_fedprox(cnn)_le10_frac1.0_mu0.01.csv",
-}
-
-# 5. COMPARATIVA GENERAL DE TODOS LOS MODELOS 
+# 4. COMPARATIVA GENERAL DE TODOS LOS MODELOS (MLP vs CNN)
 # Comparamos todos los modelos con local-epochs = 10 y fraction-fit = 1.0, que son los mejores hiperparámetros
 experiments_general = {
     "FedAvg MLP": "results_fedavg(mlp)_le10_frac1.0.csv",
@@ -123,8 +115,7 @@ experiments_general = {
 
 if __name__ == "__main__":
     # Ejecutar gráficas
-    plot_experiment("Impacto Local Epochs", experiments_le)
+    plot_experiment("Impacto Local-Epochs", experiments_le)
     plot_experiment("Impacto Fraction-Fit (Local-Epochs = 10)", experiments_frac)
     plot_experiment("Impacto Mu (Local-Epochs = 10 y Fraction-Fit = 1.0)", experiments_prox)
-    plot_experiment("MLP vs CNN (Local-Epochs = 10 y Fraction-Fit = 1.0)", experiments_models)
     plot_experiment("Comparativa General de Modelos (Local-Epochs = 10 y Fraction-Fit = 1.0)", experiments_general)
